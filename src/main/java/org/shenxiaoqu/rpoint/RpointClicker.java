@@ -75,6 +75,7 @@ public class RpointClicker {
 		setDriver(new FirefoxDriver(profile));
 		driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
+        driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
 	}	
     
     public void getPoint() throws Exception {
@@ -94,6 +95,9 @@ public class RpointClicker {
                     } catch (NoSuchElementException e) {
                         log("unknown Error.");
                         backToNormal(mainWindow);
+                    } catch (TimeoutException e) {
+                        log("timeout: pageload ?");
+                        backToNormal(mainWindow);
                     }
                     logStatus();
                 }
@@ -108,6 +112,9 @@ public class RpointClicker {
                 driver.switchTo().window(mainWindow);
             } catch (NoSuchElementException e) {
                 log("switch page Error.");
+                backToNormal(mainWindow);
+            } catch (TimeoutException e) {
+                log("timeout: pageload ?");
                 backToNormal(mainWindow);
             }
         }
@@ -164,6 +171,12 @@ public class RpointClicker {
         if (likeButton.isDisplayed()) {
             likeButton.click();
             log("This shop has been liked: " + shopTitle);
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            //driver.navigate().refresh();
         }
     }
 
@@ -192,10 +205,10 @@ public class RpointClicker {
                 }
             }
         } catch (NoSuchElementException e) {
-            log("this campaign is already applied!");
+            log("No Apply Button!");
             counterAlreadyApplied++;
         } catch (TimeoutException e) {
-        	log("try to get apply button but timeout --- (already applied).");
+        	log("try to get apply button but timeout.");
             counterAlreadyApplied++;
         }
         driver.switchTo().window(parent);
@@ -218,7 +231,7 @@ public class RpointClicker {
     private void logStatus() {
         log("-------------------- status -------------------");
         log("--- New Applied: " + counterNewApplied);
-        log("--- Already Applied: " + counterAlreadyApplied);
+        log("--- No Apply Button: " + counterAlreadyApplied + " -- already applied or page not correctly loaded");
         log("--- Server Error: " + counterServerError);
         log("-----------------------------------------------");
     }
