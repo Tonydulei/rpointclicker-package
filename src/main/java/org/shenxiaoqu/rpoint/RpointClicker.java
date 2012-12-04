@@ -1,5 +1,4 @@
 package org.shenxiaoqu.rpoint;
-
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,11 +19,12 @@ public class RpointClicker {
 	protected String baseUrl;
 	protected StringBuffer verificationErrors = new StringBuffer();
 	
-	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
+	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass, int timeout) throws Exception {
 		this.facebookUser = facebookUser;
 		this.facebookPass = facebookPass;
 		this.rakutenUser = rakutenUser;
 		this.rakutenPass = rakutenPass;
+		this.timeoutSecond = timeout;
 		setUp();
 	}
 	
@@ -55,7 +55,15 @@ public class RpointClicker {
     
     int timeoutSecond = 5;
 
-    Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
+    public int getTimeoutSecond() {
+		return timeoutSecond;
+	}
+
+	public void setTimeoutSecond(int timeoutSecond) {
+		this.timeoutSecond = timeoutSecond;
+	}
+
+	Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
 
     public void setUp() throws Exception {
     	pageMap.put(1, 4);
