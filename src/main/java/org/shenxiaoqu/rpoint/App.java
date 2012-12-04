@@ -10,7 +10,10 @@ public class App {
 
 	public static void main( String[] args )
     {
-		String facebookUser,facebookPass,rakutenUser,rakutenPass;
+		String facebookUser
+                ,facebookPass
+                ,rakutenUser
+                ,rakutenPass;
         try {
         	Scanner in = new Scanner(System.in);
         	System.out.print("Facebook UserName (email): ");
@@ -21,16 +24,25 @@ public class App {
         	rakutenUser = in.nextLine();
         	System.out.print("R password: ");
         	rakutenPass = in.nextLine();
-        	System.out.print("Set Timeout in second (default=5): ");
-        	int timeout = 5;
-        	try {
-        		timeout = Integer.parseInt(in.nextLine());
+
+            RpointClicker r = new RpointClicker(facebookUser, facebookPass, rakutenUser, rakutenPass);
+
+            System.out.print("Set Timeout in second (default=5): ");
+            try {
+                r.setTimeoutSecond(Integer.parseInt(in.nextLine()));
         	} catch (NumberFormatException e) {
         		System.out.println("timeout format wrong.");
         	}
-			RpointClicker r = new RpointClicker(facebookUser, facebookPass, rakutenUser, rakutenPass, timeout);
+            System.out.print("Start Page (default=1): ");
+            try {
+                r.setStartPage(Integer.parseInt(in.nextLine()));
+            } catch (NumberFormatException e) {
+                System.out.println("timeout format wrong.");
+            }
+
 			r.getPoint();
 		} catch (Exception e) {
+            e.printStackTrace();
 			System.out.println("Bye!");
 		}
     }

@@ -19,13 +19,11 @@ public class RpointClicker {
 	protected String baseUrl;
 	protected StringBuffer verificationErrors = new StringBuffer();
 	
-	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass, int timeout) throws Exception {
+	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
 		this.facebookUser = facebookUser;
 		this.facebookPass = facebookPass;
 		this.rakutenUser = rakutenUser;
 		this.rakutenPass = rakutenPass;
-		this.timeoutSecond = timeout;
-		setUp();
 	}
 	
 	public WebDriver getDriver() {
@@ -52,14 +50,17 @@ public class RpointClicker {
     int counterAlreadyApplied = 0;
     int counterNewApplied = 0;
     int counterServerError = 0;
-    
+
+    int startPage = 1;
     int timeoutSecond = 5;
 
-    public int getTimeoutSecond() {
-		return timeoutSecond;
-	}
+    int maxPageNum = 500;
 
-	public void setTimeoutSecond(int timeoutSecond) {
+    public void setStartPage(int startPage) {
+        this.startPage = startPage;
+    }
+
+    public void setTimeoutSecond(int timeoutSecond) {
 		this.timeoutSecond = timeoutSecond;
 	}
 
@@ -72,36 +73,36 @@ public class RpointClicker {
         pageMap.put(0, 9);
 		FirefoxProfile profile = new FirefoxProfile();
 		setDriver(new FirefoxDriver(profile));
-		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+		driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
+        driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
 	}	
     
     public void getPoint() throws Exception {
-        log("Default Charset=" + Charset.defaultCharset());
+        setUp();
         loginFacebook();
         loginRakuten();
         openRakutenEventPage();
         String mainWindow = driver.getWindowHandle();
-        for(int page = 1; page < 50; page++) {
-
-            for (int i = 1; i <= 20; i++) {
-                try {
-                	log("\n\n\n-------------------------------------------");
-                    driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
-                    applyShopCampaign(i);
-                    driver.switchTo().window(mainWindow);
-                } catch (NoSuchElementException e) {
-                    log("unknown Error.");
-                    backToNormal(mainWindow);
+        for(int page = 1; page < startPage + maxPageNum; page++) {
+            if (page >= startPage) {
+                for (int i = 1; i <= 20; i++) {
+                    try {
+                        log("\n-------------------------------------------");
+                        driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+                        applyShopCampaign(i);
+                        driver.switchTo().window(mainWindow);
+                    } catch (NoSuchElementException e) {
+                        log("unknown Error.");
+                        backToNormal(mainWindow);
+                    }
+                    logStatus();
                 }
-                log("-------------------- status -------------------");
-                log("--- New Applied: " + counterNewApplied);
-                log("--- Already Applied: " + counterAlreadyApplied);
-                log("--- Server Error: " + counterServerError);
-                log("-----------------------------------------------");
             }
 
             try {
+                log("go to page " + nextPage(page));
                 driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+                Thread.sleep(2000);
                 int nextIndex = pageMap.containsKey(page) ? pageMap.get(page) : pageMap.get(0);
                 driver.findElement(By.xpath("/html/body/div/div[3]/div/div/div/a[" + nextIndex + "]")).click();
                 driver.switchTo().window(mainWindow);
@@ -111,6 +112,10 @@ public class RpointClicker {
             }
         }
 	}
+
+    private int nextPage(int page) {
+        return page+1;
+    }
 
     private void loginFacebook() {
         driver.get("http://www.facebook.com");
@@ -159,7 +164,6 @@ public class RpointClicker {
         if (likeButton.isDisplayed()) {
             likeButton.click();
             log("This shop has been liked: " + shopTitle);
-            driver.navigate().refresh();
         }
     }
 
@@ -169,7 +173,7 @@ public class RpointClicker {
         log("Get into iFrame.");
 
         try {
-        	WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
+            WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
         	WebElement applyButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input")));
             //WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
             String campaignName = driver.findElement(By.xpath("/html/body/div[3]/div[2]/p")).getText();
@@ -209,5 +213,13 @@ public class RpointClicker {
 
     private void log(String s) {
         System.out.println(s);
+    }
+
+    private void logStatus() {
+        log("-------------------- status -------------------");
+        log("--- New Applied: " + counterNewApplied);
+        log("--- Already Applied: " + counterAlreadyApplied);
+        log("--- Server Error: " + counterServerError);
+        log("-----------------------------------------------");
     }
 }
