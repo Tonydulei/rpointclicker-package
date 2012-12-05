@@ -1,5 +1,4 @@
 package org.shenxiaoqu.rpoint;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -7,45 +6,38 @@ import java.util.concurrent.TimeUnit;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class RpointClicker {
-	
-	protected WebDriver driver;
-	protected String baseUrl;
-	protected StringBuffer verificationErrors = new StringBuffer();
 
-    String browserType = "ff";
-	
-	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
-		this.facebookUser = facebookUser;
-		this.facebookPass = facebookPass;
-		this.rakutenUser = rakutenUser;
-		this.rakutenPass = rakutenPass;
-	}
+    protected WebDriver driver;
+    protected String baseUrl;
+    protected StringBuffer verificationErrors = new StringBuffer();
 
-    public enum BrowserType {
-        FIREFOX, IE, CHROME, HTMLUNIT
+    RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
+        this.facebookUser = facebookUser;
+        this.facebookPass = facebookPass;
+        this.rakutenUser = rakutenUser;
+        this.rakutenPass = rakutenPass;
     }
 
     public WebDriver getDriver() {
-		return driver;
-	}
+        return driver;
+    }
 
-	public void setDriver(WebDriver driver) {
-		this.driver = driver;
-	}
-	
-	public String getBaseUrl() {
-		return baseUrl;
-	}
+    public void setDriver(WebDriver driver) {
+        this.driver = driver;
+    }
 
-	public StringBuffer getVerificationErrors() {
-		return verificationErrors;
-	}
-	
-	String facebookUser;
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public StringBuffer getVerificationErrors() {
+        return verificationErrors;
+    }
+
+    String facebookUser;
     String facebookPass;
     String rakutenUser;
     String rakutenPass;
@@ -65,25 +57,23 @@ public class RpointClicker {
     }
 
     public void setTimeoutSecond(int timeoutSecond) {
-		this.timeoutSecond = timeoutSecond;
-	}
+        this.timeoutSecond = timeoutSecond;
+    }
 
-	Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
 
     public void setUp() throws Exception {
-    	pageMap.put(1, 4);
+        pageMap.put(1, 4);
         pageMap.put(2, 7);
         pageMap.put(3, 8);
         pageMap.put(0, 9);
-
-		//FirefoxProfile profile = new FirefoxProfile();
-        //setDriver(new FirefoxDriver(profile));
-        setDriver(getWebDriver(getBrowserType()));
-		driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
+        FirefoxProfile profile = new FirefoxProfile();
+        setDriver(new FirefoxDriver(profile));
+        driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
         driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
-	}	
-    
+    }
+
     public void getPoint() throws Exception {
         setUp();
         loginFacebook();
@@ -130,7 +120,7 @@ public class RpointClicker {
                 backToNormal(mainWindow);
             }
         }
-	}
+    }
 
     private int nextPage(int page) {
         return page+1;
@@ -197,36 +187,36 @@ public class RpointClicker {
         driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
         log("Get into iFrame.");
 
-            WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
-        	WebElement applyButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input")));
-            //WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
-            String campaignName = driver.findElement(By.xpath("/html/body/div[3]/div[2]/p")).getText();
-            log("campaign Name: " + campaignName);
-            log("Click Apply");
-            applyButton.click();
-            for(String winHandle : driver.getWindowHandles()){
-                driver.switchTo().window(winHandle);
-                if(driver.getTitle().contains(campaignName)) {
-                    log("apply for campaign " + campaignName);
-                    driver.findElement(By.xpath("/html/body/div/table[2]/tbody/tr/td/form/button")).click();
-                    log("apply for campaign " + campaignName + " success!");
-                    counterNewApplied++;
-                    driver.close();
-                    break;
-                }
+        WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
+        WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
+        //WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
+        String campaignName = driver.findElement(By.xpath("/html/body/div[3]/div[2]/p")).getText();
+        log("campaign Name: " + campaignName);
+        log("Click Apply");
+        applyButton.click();
+        for(String winHandle : driver.getWindowHandles()){
+            driver.switchTo().window(winHandle);
+            if(driver.getTitle().contains(campaignName)) {
+                log("apply for campaign " + campaignName);
+                driver.findElement(By.xpath("/html/body/div/table[2]/tbody/tr/td/form/button")).click();
+                log("apply for campaign " + campaignName + " success!");
+                counterNewApplied++;
+                driver.close();
+                break;
             }
+        }
 
         driver.switchTo().window(parent);
     }
-    
+
     private void backToNormal(String mainWindow) {
-    	for(String winHandle : driver.getWindowHandles()){
-    		if(!winHandle.equals(mainWindow)) {
+        for(String winHandle : driver.getWindowHandles()){
+            if(!winHandle.equals(mainWindow)) {
                 driver.switchTo().window(winHandle);
                 driver.close();
             }
         }
-    	driver.switchTo().window(mainWindow);
+        driver.switchTo().window(mainWindow);
     }
 
     private void log(String s) {
@@ -235,45 +225,12 @@ public class RpointClicker {
 
     private void logStatus(int page, int i) {
         log("----------------------------------------------");
-        log("     finish page " + page + ", campaign " + i + "." );
+        log("--- finish page " + page + " --- campaign " + i + " ---" );
         log("-------------------- status -------------------");
         log("--- New Applied: " + counterNewApplied);
         log("--- No Apply Button: " + counterNoApplyButton);
         log("--- Server Error: " + counterServerError);
         log("--- Unknown Error: " + counterUnknownError);
         log("-----------------------------------------------");
-    }
-
-    public String getBrowserType() {
-        return browserType;
-    }
-
-    public void setBrowserType(String browserType) {
-        this.browserType = browserType;
-    }
-
-    public WebDriver getWebDriver(String type) {
-        if (type.equals("ff")) {
-            return new FirefoxDriver(new FirefoxProfile());
-        } else if (type.equals("ie")) {
-            DesiredCapabilities ieCapabilities = DesiredCapabilities.internetExplorer();
-            ieCapabilities.setCapability(
-                    InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
-            return new InternetExplorerDriver(ieCapabilities);
-
-        } else if (type.equals("ch")) {
-            //DesiredCapabilities chromeCapabilities = DesiredCapabilities.chrome();
-            System.setProperty("webdriver.chrome.driver", "/home/raeuser/work/justforfun/rpointclicker-package/chromedriver");
-            /*
-               String chromeBinary = System.getProperty(" ");
-               if (chromeBinary == null || chromeBinary.equals("")) {
-                   String os = System.getProperty("os.name").toLowerCase().substring(0, 3);
-                   chromeBinary = "lib/chromedriver-" + os + (os.equals("win") ? ".exe" : "");
-                   System.setProperty("webdriver.chrome.driver", chromeBinary);
-               }*/
-            return new ChromeDriver();
-        } else {
-            throw new RuntimeException("Browser type unsupported");
-        }
     }
 }
