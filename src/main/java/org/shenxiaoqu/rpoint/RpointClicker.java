@@ -216,7 +216,7 @@ public class RpointClicker {
             counterAlreadyApplied++;
         } catch (Exception e) {
         	log("something error.");
-        	counterServerError++;
+        	intentError++;
         }
         driver.switchTo().window(parent);
     }
@@ -240,6 +240,7 @@ public class RpointClicker {
         log("--- New Applied: " + counterNewApplied);
         log("--- No Apply Button: " + counterAlreadyApplied + " -- already applied or page not correctly loaded");
         log("--- Server Error: " + counterServerError);
+        log("--- unknown Error: " + intentError);
         log("-----------------------------------------------");
     }
 }
