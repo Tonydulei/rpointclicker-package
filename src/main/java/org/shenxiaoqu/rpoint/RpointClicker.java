@@ -52,6 +52,8 @@ public class RpointClicker {
 
     int maxPageNum = 500;
 
+    String mainWindow;
+
     public void setStartPage(int startPage) {
         this.startPage = startPage;
     }
@@ -79,7 +81,7 @@ public class RpointClicker {
         loginFacebook();
         loginRakuten();
         openRakutenEventPage();
-        String mainWindow = driver.getWindowHandle();
+        mainWindow = driver.getWindowHandle();
         for(int page = 1; page < startPage + maxPageNum; page++) {
             if (page >= startPage) {
                 for (int i = 1; i <= 20; i++) {
@@ -98,6 +100,7 @@ public class RpointClicker {
                         backToNormal(mainWindow);
                     } catch (Exception e) {
                         log("unknown error");
+                        e.printStackTrace();
                         counterUnknownError++;
                         backToNormal(mainWindow);
                     }

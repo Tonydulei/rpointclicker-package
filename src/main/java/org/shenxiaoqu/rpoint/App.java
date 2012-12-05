@@ -27,13 +27,13 @@ public class App {
             try {
                 r.setTimeoutSecond(Integer.parseInt(in.nextLine()));
             } catch (NumberFormatException e) {
-                System.out.println("timeout format wrong.");
+                System.out.println("timeout format wrong. use default ...");
             }
             System.out.print("Start Page (default=1): ");
             try {
                 r.setStartPage(Integer.parseInt(in.nextLine()));
             } catch (NumberFormatException e) {
-                System.out.println("page format wrong.");
+                System.out.println("page format wrong. use default ...");
             }
 
             r.getPoint();
