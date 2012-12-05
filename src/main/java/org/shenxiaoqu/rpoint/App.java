@@ -40,6 +40,9 @@ public class App {
                 System.out.println("page format wrong.");
             }
 
+            System.out.print("Set browser type:(ie, ff, ch) ");
+            r.setBrowserType(in.nextLine());
+
 			r.getPoint();
 		} catch (Exception e) {
             e.printStackTrace();

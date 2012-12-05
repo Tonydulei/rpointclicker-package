@@ -15,6 +15,8 @@ public class RpointClicker {
 	protected WebDriver driver;
 	protected String baseUrl;
 	protected StringBuffer verificationErrors = new StringBuffer();
+
+    String browserType = "ff";
 	
 	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
 		this.facebookUser = facebookUser;
@@ -22,8 +24,12 @@ public class RpointClicker {
 		this.rakutenUser = rakutenUser;
 		this.rakutenPass = rakutenPass;
 	}
-	
-	public WebDriver getDriver() {
+
+    public enum BrowserType {
+        FIREFOX, IE, CHROME, HTMLUNIT
+    }
+
+    public WebDriver getDriver() {
 		return driver;
 	}
 
@@ -69,8 +75,10 @@ public class RpointClicker {
         pageMap.put(2, 7);
         pageMap.put(3, 8);
         pageMap.put(0, 9);
-		FirefoxProfile profile = new FirefoxProfile();
-		setDriver(new FirefoxDriver(profile));
+
+		//FirefoxProfile profile = new FirefoxProfile();
+        //setDriver(new FirefoxDriver(profile));
+        setDriver(getWebDriver(getBrowserType()));
 		driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
         driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
@@ -103,7 +111,7 @@ public class RpointClicker {
                         counterUnknownError++;
                         backToNormal(mainWindow);
                     }
-                    logStatus();
+                    logStatus(page, i);
                 }
             }
 
@@ -225,12 +233,47 @@ public class RpointClicker {
         System.out.println(s);
     }
 
-    private void logStatus() {
+    private void logStatus(int page, int i) {
+        log("----------------------------------------------");
+        log("     finish page " + page + ", campaign " + i + "." );
         log("-------------------- status -------------------");
         log("--- New Applied: " + counterNewApplied);
         log("--- No Apply Button: " + counterNoApplyButton);
         log("--- Server Error: " + counterServerError);
         log("--- Unknown Error: " + counterUnknownError);
         log("-----------------------------------------------");
+    }
+
+    public String getBrowserType() {
+        return browserType;
+    }
+
+    public void setBrowserType(String browserType) {
+        this.browserType = browserType;
+    }
+
+    public WebDriver getWebDriver(String type) {
+        if (type.equals("ff")) {
+            return new FirefoxDriver(new FirefoxProfile());
+        } else if (type.equals("ie")) {
+            DesiredCapabilities ieCapabilities = DesiredCapabilities.internetExplorer();
+            ieCapabilities.setCapability(
+                    InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+            return new InternetExplorerDriver(ieCapabilities);
+
+        } else if (type.equals("ch")) {
+            //DesiredCapabilities chromeCapabilities = DesiredCapabilities.chrome();
+            System.setProperty("webdriver.chrome.driver", "/home/raeuser/work/justforfun/rpointclicker-package/chromedriver");
+            /*
+               String chromeBinary = System.getProperty(" ");
+               if (chromeBinary == null || chromeBinary.equals("")) {
+                   String os = System.getProperty("os.name").toLowerCase().substring(0, 3);
+                   chromeBinary = "lib/chromedriver-" + os + (os.equals("win") ? ".exe" : "");
+                   System.setProperty("webdriver.chrome.driver", chromeBinary);
+               }*/
+            return new ChromeDriver();
+        } else {
+            throw new RuntimeException("Browser type unsupported");
+        }
     }
 }
