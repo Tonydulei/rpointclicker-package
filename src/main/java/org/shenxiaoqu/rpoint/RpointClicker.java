@@ -1,5 +1,6 @@
 package org.shenxiaoqu.rpoint;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -86,7 +87,8 @@ public class RpointClicker {
         setDriver(getWebDriver(getBrowserType()));
 		driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
+       // driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
+   
         log("driver is ok");
 	}	
     
@@ -139,7 +141,8 @@ public class RpointClicker {
         driver.close();
     }
 
-    public WebDriver getWebDriver(String type) {
+    @SuppressWarnings("deprecation")
+	public WebDriver getWebDriver(String type) {
     	if (type.equals("ff")) {
     		return new FirefoxDriver(new FirefoxProfile());
     	} else if (type.equals("ie")) {
@@ -149,8 +152,8 @@ public class RpointClicker {
     		return new InternetExplorerDriver(ieCapabilities);
 
     	} else if (type.equals("ch")) {
-    		//DesiredCapabilities chromeCapabilities = DesiredCapabilities.chrome();
-    		System.setProperty("webdriver.chrome.driver", "/home/raeuser/work/justforfun/rpointclicker-package/chromedriver");
+    		DesiredCapabilities chromeCapabilities = DesiredCapabilities.chrome();
+    		System.setProperty("webdriver.chrome.driver", "/Users/lvqiang/Downloads/chromedriver");
     		/*
     		String chromeBinary = System.getProperty(" ");
     		if (chromeBinary == null || chromeBinary.equals("")) {
@@ -158,7 +161,7 @@ public class RpointClicker {
     		    chromeBinary = "lib/chromedriver-" + os + (os.equals("win") ? ".exe" : "");
     		    System.setProperty("webdriver.chrome.driver", chromeBinary);
     		}*/
-    		return new ChromeDriver();
+    		return new ChromeDriver(chromeCapabilities);
     	} else {
     		throw new RuntimeException("Browser type unsupported");
     	}
