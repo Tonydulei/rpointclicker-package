@@ -8,8 +8,11 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -18,6 +21,10 @@ public class RpointClicker {
 	protected WebDriver driver;
 	protected String baseUrl;
 	protected StringBuffer verificationErrors = new StringBuffer();
+	
+    public enum BrowserType {
+        FIREFOX, IE, CHROME, HTMLUNIT
+    }
 	
 	RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
 		this.facebookUser = facebookUser;
@@ -55,6 +62,8 @@ public class RpointClicker {
     int startPage = 1;
     int timeoutSecond = 5;
 
+    String browserType = "ff";
+    
     int maxPageNum = 500;
 
     public void setStartPage(int startPage) {
@@ -72,11 +81,13 @@ public class RpointClicker {
         pageMap.put(2, 7);
         pageMap.put(3, 8);
         pageMap.put(0, 9);
-		FirefoxProfile profile = new FirefoxProfile();
-		setDriver(new FirefoxDriver(profile));
+		//FirefoxProfile profile = new FirefoxProfile();
+		//setDriver(new FirefoxDriver(profile));
+        setDriver(getWebDriver(getBrowserType()));
 		driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
         driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
+        log("driver is ok");
 	}	
     
     public void getPoint() throws Exception {
@@ -123,6 +134,35 @@ public class RpointClicker {
             }
         }
 	}
+
+    public void closeBrowser() {
+        driver.close();
+    }
+
+    public WebDriver getWebDriver(String type) {
+    	if (type.equals("ff")) {
+    		return new FirefoxDriver(new FirefoxProfile());
+    	} else if (type.equals("ie")) {
+    		DesiredCapabilities ieCapabilities = DesiredCapabilities.internetExplorer();
+    		ieCapabilities.setCapability(
+    		        InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+    		return new InternetExplorerDriver(ieCapabilities);
+
+    	} else if (type.equals("ch")) {
+    		//DesiredCapabilities chromeCapabilities = DesiredCapabilities.chrome();
+    		System.setProperty("webdriver.chrome.driver", "/home/raeuser/work/justforfun/rpointclicker-package/chromedriver");
+    		/*
+    		String chromeBinary = System.getProperty(" ");
+    		if (chromeBinary == null || chromeBinary.equals("")) {
+    		    String os = System.getProperty("os.name").toLowerCase().substring(0, 3);
+    		    chromeBinary = "lib/chromedriver-" + os + (os.equals("win") ? ".exe" : "");
+    		    System.setProperty("webdriver.chrome.driver", chromeBinary);
+    		}*/
+    		return new ChromeDriver();
+    	} else {
+    		throw new RuntimeException("Browser type unsupported");
+    	}
+    }
 
     private int nextPage(int page) {
         return page+1;
@@ -243,4 +283,13 @@ public class RpointClicker {
         log("--- unknown Error: " + intentError);
         log("-----------------------------------------------");
     }
+
+	public String getBrowserType() {
+		return browserType;
+	}
+
+	public void setBrowserType(String browserType) {
+		this.browserType = browserType;
+	}
+    
 }

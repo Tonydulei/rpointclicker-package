@@ -2,6 +2,8 @@ package org.shenxiaoqu.rpoint;
 
 import java.util.Scanner;
 
+import org.shenxiaoqu.rpoint.RpointClicker;
+
 /**
  * Hello world!
  *
@@ -39,7 +41,9 @@ public class App {
             } catch (NumberFormatException e) {
                 System.out.println("timeout format wrong.");
             }
-
+            System.out.print("Set browser type:(ie, ff, ch) ");
+            r.setBrowserType(in.nextLine());
+            
 			r.getPoint();
 		} catch (Exception e) {
             e.printStackTrace();
