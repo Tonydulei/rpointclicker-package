@@ -1,12 +1,15 @@
 package org.shenxiaoqu.rpoint;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class RpointClicker {
 
@@ -14,7 +17,7 @@ public class RpointClicker {
     protected String baseUrl;
     protected StringBuffer verificationErrors = new StringBuffer();
 
-    RpointClicker(String facebookUser,String facebookPass,String rakutenUser,String rakutenPass) throws Exception {
+    RpointClicker(String facebookUser, String facebookPass, String rakutenUser, String rakutenPass) throws Exception {
         this.facebookUser = facebookUser;
         this.facebookPass = facebookPass;
         this.rakutenUser = rakutenUser;
@@ -42,7 +45,8 @@ public class RpointClicker {
     String rakutenUser;
     String rakutenPass;
 
-    int counterNoApplyButton = 0;
+    int counterTimeout = 0;
+    int counterAlreadyApplied = 0;
     int counterNewApplied = 0;
     int counterServerError = 0;
     int counterUnknownError = 0;
@@ -82,7 +86,7 @@ public class RpointClicker {
         loginRakuten();
         openRakutenEventPage();
         mainWindow = driver.getWindowHandle();
-        for(int page = 1; page < startPage + maxPageNum; page++) {
+        for (int page = 1; page < startPage + maxPageNum; page++) {
             if (page >= startPage) {
                 for (int i = 1; i <= 20; i++) {
                     try {
@@ -91,18 +95,23 @@ public class RpointClicker {
                         applyShopCampaign(i);
                         driver.switchTo().window(mainWindow);
                     } catch (NoSuchElementException e) {
-                        log("No Apply Button!");
-                        counterNoApplyButton++;
-                        backToNormal(mainWindow);
+                        log("Timeout, wait " + timeoutSecond + " and didn't find the element.");
+                        counterTimeout++;
+                        backToNormal();
                     } catch (TimeoutException e) {
-                        log("try to get apply button but timeout.");
-                        counterNoApplyButton++;
-                        backToNormal(mainWindow);
+                        if (driver.getPageSource().contains("応募完了しました")) {
+                            log("You already applied this campaign.");
+                            counterAlreadyApplied++;
+                        } else {
+                            log("Timeout, wait " + timeoutSecond + " and didn't find the element.");
+                            counterTimeout++;
+                        }
+                        backToNormal();
                     } catch (Exception e) {
                         log("unknown error");
                         e.printStackTrace();
                         counterUnknownError++;
-                        backToNormal(mainWindow);
+                        backToNormal();
                     }
                     logStatus(page, i);
                 }
@@ -117,16 +126,16 @@ public class RpointClicker {
                 driver.switchTo().window(mainWindow);
             } catch (NoSuchElementException e) {
                 log("switch page Error.");
-                backToNormal(mainWindow);
+                backToNormal();
             } catch (TimeoutException e) {
                 log("timeout: pageload ?");
-                backToNormal(mainWindow);
+                backToNormal();
             }
         }
     }
 
     private int nextPage(int page) {
-        return page+1;
+        return page + 1;
     }
 
     private void loginFacebook() {
@@ -150,25 +159,45 @@ public class RpointClicker {
     private void applyShopCampaign(int i) {
         String shopTitle = driver.findElement(By.xpath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[3]/a")).getText();
         log("click " + shopTitle);
-        driver.findElement(By.xpath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[4]/a")).click();
-        boolean serverOk = false;
-        for(String winHandle : driver.getWindowHandles()){
-            driver.switchTo().window(winHandle);
-            if(driver.getTitle().contains(shopTitle)) {
-                log("start " + shopTitle);
-                likeThisShop(shopTitle);
-                applyThisShop(winHandle);
-                serverOk = true;
-                break;
-            }
-        }
-        if (!serverOk) {
+
+        // click the campaign to open a new window
+        WebElement campaignLink = driver.findElement(By.xpath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[4]/a"));
+        clickAndSwitchToThatWindow(campaignLink);
+
+        // apply for campaign
+        String partShopName = shopTitle.substring(0, shopTitle.length() > 5 ? 5 : shopTitle.length());
+        if (driver.getTitle().contains(partShopName)) {
+            likeThisShop(shopTitle);
+            applyThisShop(driver.getWindowHandle());
+        } else {
             log("server error for " + shopTitle);
             counterServerError++;
-        } else {
-            log("apply " + shopTitle + " done!");
         }
         driver.close();
+
+    }
+
+    private void clickAndSwitchToThatWindow(WebElement e) {
+        final int windowsBefore = driver.getWindowHandles().size();
+        e.click();
+
+        ExpectedCondition<Boolean> windowCondition = new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver driver) {
+                return driver.getWindowHandles().size() == windowsBefore + 1;
+            }
+        };
+
+        int waitSecond = 10;
+        WebDriverWait waitForWindow = new WebDriverWait(driver, waitSecond);
+        waitForWindow.until(windowCondition);
+
+        switchToNewWindow();
+    }
+
+    private void switchToNewWindow() {
+        for (String winHandle : driver.getWindowHandles()) {
+            driver.switchTo().window(winHandle);
+        }
     }
 
     private void likeThisShop(String shopTitle) {
@@ -186,35 +215,36 @@ public class RpointClicker {
     }
 
     private void applyThisShop(String parent) {
-        log("focus iFrame.");
-        driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
-        log("Get into iFrame.");
 
-        WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
-        WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
-        //WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
+        // switch to the campaign iframe
+        driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+
+        // log the campaign name
         String campaignName = driver.findElement(By.xpath("/html/body/div[3]/div[2]/p")).getText();
         log("campaign Name: " + campaignName);
-        log("Click Apply");
-        applyButton.click();
-        for(String winHandle : driver.getWindowHandles()){
-            driver.switchTo().window(winHandle);
-            if(driver.getTitle().contains(campaignName)) {
-                log("apply for campaign " + campaignName);
-                driver.findElement(By.xpath("/html/body/div/table[2]/tbody/tr/td/form/button")).click();
-                log("apply for campaign " + campaignName + " success!");
-                counterNewApplied++;
-                driver.close();
-                break;
-            }
-        }
 
+        // wait a specified period of time for the "Apply" button
+        WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
+        WebElement applyButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input")));
+
+        clickAndSwitchToThatWindow(applyButton);
+
+        if (driver.getTitle().contains(campaignName)) {
+            WebElement applyButtonFinal = wait.until(ExpectedConditions.elementToBeClickable((By.xpath("/html/body/div/table[2]/tbody/tr/td/form/button"))));
+            applyButtonFinal.click();
+            log("apply for campaign " + campaignName + " success!");
+            counterNewApplied++;
+        } else {
+            log("server error for campaign " + campaignName);
+            counterServerError++;
+        }
+        driver.close();
         driver.switchTo().window(parent);
     }
 
-    private void backToNormal(String mainWindow) {
-        for(String winHandle : driver.getWindowHandles()){
-            if(!winHandle.equals(mainWindow)) {
+    private void backToNormal() {
+        for (String winHandle : driver.getWindowHandles()) {
+            if (!winHandle.equals(mainWindow)) {
                 driver.switchTo().window(winHandle);
                 driver.close();
             }
@@ -228,12 +258,13 @@ public class RpointClicker {
 
     private void logStatus(int page, int i) {
         log("----------------------------------------------");
-        log("--- finish page " + page + " --- campaign " + i + " ---" );
+        log("-----  finish page " + page + "     ---    campaign " + i);
         log("-------------------- status -------------------");
-        log("--- New Applied: " + counterNewApplied);
-        log("--- No Apply Button: " + counterNoApplyButton);
-        log("--- Server Error: " + counterServerError);
-        log("--- Unknown Error: " + counterUnknownError);
+        log("-----  New Applied:           " + counterNewApplied);
+        log("-----  Already Applied:       " + counterAlreadyApplied);
+        log("-----  Timeout:               " + counterTimeout);
+        log("-----  Server Error:          " + counterServerError);
+        log("-----  Unknown Error:         " + counterUnknownError);
         log("-----------------------------------------------");
     }
 }
