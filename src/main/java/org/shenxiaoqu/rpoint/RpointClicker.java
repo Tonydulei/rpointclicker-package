@@ -50,6 +50,7 @@ public class RpointClicker {
     int counterAlreadyApplied = 0;
     int counterNewApplied = 0;
     int counterServerError = 0;
+    int intentError = 0;
 
     int startPage = 1;
     int timeoutSecond = 5;
@@ -98,6 +99,9 @@ public class RpointClicker {
                     } catch (TimeoutException e) {
                         log("timeout: pageload ?");
                         backToNormal(mainWindow);
+                    } catch (Exception e) {
+                    	log("intent something error.");
+                    	backToNormal(mainWindow);
                     }
                     logStatus();
                 }
@@ -210,6 +214,9 @@ public class RpointClicker {
         } catch (TimeoutException e) {
         	log("try to get apply button but timeout.");
             counterAlreadyApplied++;
+        } catch (Exception e) {
+        	log("something error.");
+        	counterServerError++;
         }
         driver.switchTo().window(parent);
     }
