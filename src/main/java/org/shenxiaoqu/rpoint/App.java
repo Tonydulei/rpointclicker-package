@@ -37,7 +37,7 @@ public class App {
             try {
                 r.setStartPage(Integer.parseInt(in.nextLine()));
             } catch (NumberFormatException e) {
-                System.out.println("timeout format wrong.");
+                System.out.println("page format wrong.");
             }
 
 			r.getPoint();

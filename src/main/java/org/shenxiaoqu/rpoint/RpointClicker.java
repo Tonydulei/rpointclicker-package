@@ -3,11 +3,8 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -47,9 +44,10 @@ public class RpointClicker {
     String rakutenUser;
     String rakutenPass;
 
-    int counterAlreadyApplied = 0;
+    int counterNoApplyButton = 0;
     int counterNewApplied = 0;
     int counterServerError = 0;
+    int counterUnknownError = 0;
 
     int startPage = 1;
     int timeoutSecond = 5;
@@ -93,10 +91,16 @@ public class RpointClicker {
                         applyShopCampaign(i);
                         driver.switchTo().window(mainWindow);
                     } catch (NoSuchElementException e) {
-                        log("unknown Error.");
+                        log("No Apply Button!");
+                        counterNoApplyButton++;
                         backToNormal(mainWindow);
                     } catch (TimeoutException e) {
-                        log("timeout: pageload ?");
+                        log("try to get apply button but timeout.");
+                        counterNoApplyButton++;
+                        backToNormal(mainWindow);
+                    } catch (Exception e) {
+                        log("unknown error");
+                        counterUnknownError++;
                         backToNormal(mainWindow);
                     }
                     logStatus();
@@ -185,7 +189,6 @@ public class RpointClicker {
         driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
         log("Get into iFrame.");
 
-        try {
             WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
         	WebElement applyButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input")));
             //WebElement applyButton = driver.findElement(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input"));
@@ -204,13 +207,7 @@ public class RpointClicker {
                     break;
                 }
             }
-        } catch (NoSuchElementException e) {
-            log("No Apply Button!");
-            counterAlreadyApplied++;
-        } catch (TimeoutException e) {
-        	log("try to get apply button but timeout.");
-            counterAlreadyApplied++;
-        }
+
         driver.switchTo().window(parent);
     }
     
@@ -231,8 +228,9 @@ public class RpointClicker {
     private void logStatus() {
         log("-------------------- status -------------------");
         log("--- New Applied: " + counterNewApplied);
-        log("--- No Apply Button: " + counterAlreadyApplied + " -- already applied or page not correctly loaded");
+        log("--- No Apply Button: " + counterNoApplyButton);
         log("--- Server Error: " + counterServerError);
+        log("--- Unknown Error: " + counterUnknownError);
         log("-----------------------------------------------");
     }
 }
