@@ -46,22 +46,73 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
+			<artifactId>maven-assembly-plugin</artifactId>
+			<configuration>
+				<descriptorRefs>
+					<descriptorRef>jar-with-dependencies</descriptorRef>
+				</descriptorRefs>
+			</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
+					<encoding>UTF-8</encoding>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<configuration>
-						<encoding>UTF-8</encoding>
-						<source>1.6</source>
-						<target>1.6</target>
-					</configuration>
-				</plugin>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.4</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<shadedArtifactAttached>true</shadedArtifactAttached> <!-- Make the shaded artifact not the main one -->
+					<shadedClassifierName>shaded</shadedClassifierName> <!-- set the suffix to the shaded jar -->
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
+				<artifactId>launch4j-plugin</artifactId>
+				<version>1.5.0.0</version>
+				<executions>
+		
+					<!-- Command-line exe -->
+					<execution>
+						<id>l4j-cli</id>
+						<phase>package</phase>
+						<goals>
+							<goal>launch4j</goal>
+						</goals>
+						<configuration>
+							<headerType>console</headerType>
+							<outfile>target/rpoint-${version}.exe</outfile>
+							<jar>target/${artifactId}-${version}-shaded.jar</jar> <!-- 'shaded' is the value set on shadedClassifierName above -->
+							<errTitle>App Err</errTitle>
+							<classPath>
+								<mainClass>org.shenxiaoqu.rpoint.App</mainClass>
+							</classPath>
+							<icon>src/main/resources/icons/favicon.ico</icon>
+							<jre>
+								<minVersion>1.5.0</minVersion>
+								<maxVersion>1.6.0</maxVersion>
+								<initialHeapSize>128</initialHeapSize>
+								<maxHeapSize>1024</maxHeapSize>
+							</jre>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>	
 		</plugins>
+		
 	</build>
 </project>
