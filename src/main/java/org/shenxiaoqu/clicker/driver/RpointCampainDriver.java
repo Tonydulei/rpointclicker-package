@@ -1,32 +1,39 @@
-package org.shenxiaoqu.rpoint;
+package org.shenxiaoqu.clicker.driver;
 
-import org.openqa.selenium.*;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebElement;
+import org.shenxiaoqu.clicker.site.simulator.FacebookSimulator;
+import org.shenxiaoqu.clicker.site.simulator.RakutenSimulator;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-public class RpointClicker {
-	
-	RpointClicker(String facebookUser, String facebookPass, String rakutenUser, String rakutenPass) throws Exception {
+public class RpointCampainDriver extends AbstractDriver {
+
+    PrintStream logger;
+
+    RakutenSimulator rakutenSimulator;
+    FacebookSimulator facebookSimulator;
+
+    public RpointCampainDriver(String facebookUser, String facebookPass, String rakutenUser, String rakutenPass) throws Exception {
         this.facebookUser = facebookUser;
         this.facebookPass = facebookPass;
         this.rakutenUser = rakutenUser;
         this.rakutenPass = rakutenPass;
+        logger = System.out;
     }
-	
-	public enum ClickOrder {NEW_ARRIVAL, DEADLINE, OLD_ARRIVAL, POINT_AMOUT, WINNER_NUMBER};
+
+    public void setLogger(PrintStream logger) {
+        this.logger = logger;
+    }
+
+    public enum ClickOrder {NEW_ARRIVAL, DEADLINE, OLD_ARRIVAL, POINT_AMOUT, WINNER_NUMBER};
 	
 	private ClickOrder clickOrder = ClickOrder.NEW_ARRIVAL;
 	
-	protected WebDriver driver;
-    
-    String facebookUser;
+	String facebookUser;
     String facebookPass;
     String rakutenUser;
     String rakutenPass;
@@ -43,10 +50,23 @@ public class RpointClicker {
     // wait timeout if the "Apply" button does not present
     int timeoutSecond = 5;
 
-    int maxPageNum = 500;
+    int maxPageNum = 1000;
+    int numOfEventsOnePage = 20;
 
     // the Event main page handler.
     String mainWindow;
+
+    /**
+     * This map is built to look for the "Next Page" button in the simulator iFrame
+     */
+    Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
+
+    private void setForwardOrder() {
+        pageMap.put(1, 4);
+        pageMap.put(2, 7);
+        pageMap.put(3, 8);
+        pageMap.put(0, 9);
+    }
     
     /**
 	 * set order to click
@@ -59,15 +79,6 @@ public class RpointClicker {
 		}
 		clickOrder = ClickOrder.values()[i];
 	}
-	
-	public void setClickOrder(ClickOrder order) {
-		clickOrder = order;
-	}
-
-
-    private void setDriver(WebDriver driver) {
-        this.driver = driver;
-    }
 
     public void setStartPage(int startPage) {
         this.startPage = startPage;
@@ -77,25 +88,13 @@ public class RpointClicker {
         this.timeoutSecond = timeoutSecond;
     }
     
-    /**
-     * This map is built to look for the "Next Page" button in the event iFrame
-     */
-    Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
-    
-    private void setForwardOrder() {
-    	pageMap.put(1, 4);
-        pageMap.put(2, 7);
-        pageMap.put(3, 8);
-        pageMap.put(0, 9);
-    }
 
-    private void setUp() throws Exception {
+
+    protected void setUp() throws Exception {
+        super.setUp();
     	setForwardOrder();
-        FirefoxProfile profile = new FirefoxProfile();
-        setDriver(new FirefoxDriver(profile));
-        driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
-        driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
+        rakutenSimulator = new RakutenSimulator(driver);
+        facebookSimulator = new FacebookSimulator(driver);
     }
     
     /**
@@ -103,11 +102,11 @@ public class RpointClicker {
      * @throws Exception
      */
 
-    public void getPoint() throws Exception {
+    public void run() throws Exception {
         setUp();
-        loginFacebook();
-        loginRakuten();
-        openRakutenEventPage();
+        facebookSimulator.login(facebookUser, facebookPass);
+        rakutenSimulator.login(rakutenUser, rakutenPass);
+        rakutenSimulator.openRakutenIchibaFacebookEventPage();
         
         // record the main window
         mainWindow = driver.getWindowHandle();
@@ -117,7 +116,7 @@ public class RpointClicker {
         
         for (int page = 1; page < startPage + maxPageNum; page++) {
             if (page >= startPage) {
-                for (int i = 1; i <= 20; i++) {
+                for (int i = 1; i <= numOfEventsOnePage; i++) {
                     try {
                         log("\n-------------------------------------------");
                         switchToEventFrame();
@@ -152,7 +151,7 @@ public class RpointClicker {
                 switchToEventFrame();
                 Thread.sleep(2000);
                 int nextIndex = pageMap.containsKey(page) ? pageMap.get(page) : pageMap.get(0);
-                driver.findElement(By.xpath("/html/body/div/div[3]/div/div/div/a[" + nextIndex + "]")).click();
+                clickElementByXPath("/html/body/div/div[3]/div/div/div/a[" + nextIndex + "]");
                 switchToEventMainWindow();
             } catch (NoSuchElementException e) {
                 log("switch page Error.");
@@ -165,11 +164,11 @@ public class RpointClicker {
     }
     
     private void switchToEventFrame() {
-    	driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+    	switchToFrameByXPath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe");
     }
     
     private void switchToEventMainWindow() {
-    	driver.switchTo().window(mainWindow);
+    	switchToWindow(mainWindow);
     }
 
     /**
@@ -184,7 +183,7 @@ public class RpointClicker {
             } catch (InterruptedException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
-            driver.findElement(By.xpath("/html/body/div[1]/div[2]/table/tbody/tr/td[2]/div/button[" + (clickOrder.ordinal() + 1) + "]")).click();
+            clickElementByXPath("/html/body/div[1]/div[2]/table/tbody/tr/td[2]/div/button[" + (clickOrder.ordinal() + 1) + "]");
             switchToEventMainWindow();
             try {
 				Thread.sleep(2000);
@@ -195,41 +194,18 @@ public class RpointClicker {
 		}
 	}
 
-	private int nextPage(int page) {
-        return page + 1;
-    }
-
-    private void loginFacebook() {
-        driver.get("http://www.facebook.com");
-        driver.findElement(By.xpath("//input[contains(@id,'email')]")).sendKeys(facebookUser);
-        driver.findElement(By.xpath("//input[contains(@id,'pass')]")).sendKeys(facebookPass);
-        driver.findElement(By.xpath("//*[@id=\"loginbutton\"]")).click();
-    }
-
-    private void loginRakuten() {
-        driver.get("https://www.rakuten.co.jp/myrakuten/login.html");
-        driver.findElement(By.xpath("//*[@id=\"userid\"]")).sendKeys(rakutenUser);
-        driver.findElement(By.xpath("//*[@id=\"passwd\"]")).sendKeys(rakutenPass);
-        driver.findElement(By.xpath("/html/body/div/div[2]/div/form/div/p/input")).click();
-    }
-
-    private void openRakutenEventPage() {
-        driver.get("http://www.facebook.com/RakutenIchiba/app_260989120681773");
-    }
-
-    /**
+	/**
      * Apply one campaign on a page.
      * @param i : the i-th campaign on this page
      */
     private void applyShopCampaign(int i) {
-        String shopTitle = driver.findElement(By.xpath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[3]/a")).getText();
+        String shopTitle = findElementByXPath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[3]/a").getText();
         log("click " + shopTitle);
 
         // click the campaign to open a new window
-        WebElement campaignLink = driver.findElement(By.xpath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[4]/a"));
-        clickAndSwitchToThatWindow(campaignLink);
+        clickAndSwitchToThatWindow(findElementByXPathUntilClickable("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[4]/a"));
 
-        // apply for campaign
+        // apply for campaign if the shopName matches, or there might be a server error.
         String partShopName = shopTitle.substring(0, shopTitle.length() > 5 ? 5 : shopTitle.length());
         if (driver.getTitle().contains(partShopName)) {
             likeThisShop(shopTitle);
@@ -239,38 +215,6 @@ public class RpointClicker {
             counterServerError++;
         }
         driver.close();
-
-    }
-
-    /**
-     * click an element which opens a new window, and
-     * switch the driver to this new window.
-     * @param e
-     */
-    private void clickAndSwitchToThatWindow(WebElement e) {
-        final int windowsBefore = driver.getWindowHandles().size();
-        e.click();
-
-        ExpectedCondition<Boolean> windowCondition = new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver driver) {
-                return driver.getWindowHandles().size() == windowsBefore + 1;
-            }
-        };
-
-        int waitSecond = 10;
-        WebDriverWait waitForWindow = new WebDriverWait(driver, waitSecond);
-        waitForWindow.until(windowCondition);
-
-        switchToNewWindow();
-    }
-
-    /**
-     * switch to the newest opened window
-     */
-    private void switchToNewWindow() {
-        for (String winHandle : driver.getWindowHandles()) {
-            driver.switchTo().window(winHandle);
-        }
     }
 
     /**
@@ -278,16 +222,15 @@ public class RpointClicker {
      * @param shopTitle
      */
     private void likeThisShop(String shopTitle) {
-        WebElement likeButton = driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div/div[2]/div/div/div/div[3]/span/span/span/label"));
+        WebElement likeButton = findElementByXPath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div/div[2]/div/div/div/div[3]/span/span/span/label");
         if (likeButton.isDisplayed()) {
-            likeButton.click();
+            clickElement(likeButton);
             log("This shop has been liked: " + shopTitle);
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
-            //driver.navigate().refresh();
         }
     }
 
@@ -296,18 +239,14 @@ public class RpointClicker {
         // switch to the campaign iframe
     	switchToEventFrame();
         // log the campaign name
-        String campaignName = driver.findElement(By.xpath("/html/body/div[3]/div[2]/p")).getText();
+        String campaignName = findElementByXPath("/html/body/div[3]/div[2]/p").getText();
         log("campaign Name: " + campaignName);
 
         // wait a specified period of time for the "Apply" button
-        WebDriverWait wait = new WebDriverWait(driver, timeoutSecond);
-        WebElement applyButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div[3]/div[3]/div[2]/form/input")));
-
-        clickAndSwitchToThatWindow(applyButton);
+        clickAndSwitchToThatWindow(findElementByXPathUntilClickable("/html/body/div[3]/div[3]/div[2]/form/input"));
 
         if (driver.getTitle().contains(campaignName)) {
-            WebElement applyButtonFinal = wait.until(ExpectedConditions.elementToBeClickable((By.xpath("/html/body/div/table[2]/tbody/tr/td/form/button"))));
-            applyButtonFinal.click();
+            clickElementByXPath("/html/body/div/table[2]/tbody/tr/td/form/button");
             log("apply for campaign " + campaignName + " success!");
             counterNewApplied++;
         } else {
@@ -333,7 +272,7 @@ public class RpointClicker {
     }
 
     private void log(String s) {
-        System.out.println(s);
+        logger.println(s);
     }
 
     private void logStatus(int page, int i) {
@@ -346,5 +285,9 @@ public class RpointClicker {
         log("-----  Server Error:          " + counterServerError);
         log("-----  Unknown Error:         " + counterUnknownError);
         log("-----------------------------------------------");
+    }
+
+    private int nextPage(int page) {
+        return page + 1;
     }
 }

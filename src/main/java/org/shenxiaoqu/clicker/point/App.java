@@ -1,4 +1,5 @@
-package org.shenxiaoqu.rpoint;
+package org.shenxiaoqu.clicker.point;
+import org.shenxiaoqu.clicker.driver.RpointCampainDriver;
 
 import java.io.Console;
 import java.util.Scanner;
@@ -16,7 +17,7 @@ public class App {
             }
         	
         	console.printf("###### welcome to shenxiaoqu ###### \n\n");
-        	
+
             Scanner in = new Scanner(System.in);
             System.out.print("Facebook UserName (email): ");
             facebookUser = in.nextLine();
@@ -27,7 +28,7 @@ public class App {
             char rPasswordArray[] = console.readPassword("R password: ");
             rakutenPass = new String(rPasswordArray);
 
-            RpointClicker r = new RpointClicker(facebookUser, facebookPass, rakutenUser, rakutenPass);
+            RpointCampainDriver r = new RpointCampainDriver(facebookUser, facebookPass, rakutenUser, rakutenPass);
 
             // set click condition.
             System.out.print("Set Timeout in second (default=5): ");
@@ -59,7 +60,7 @@ public class App {
             }
 
             System.out.print("\nStart ...");
-            r.getPoint();
+            r.run();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Bye!");

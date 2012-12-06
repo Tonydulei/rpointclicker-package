@@ -95,7 +95,7 @@
                                     <jar>target/${artifactId}-${version}-shaded.jar</jar> <!-- 'shaded' is the value set on shadedClassifierName above -->
                                     <errTitle>App Err</errTitle>
                                     <classPath>
-                                        <mainClass>org.shenxiaoqu.rpoint.App</mainClass>
+                                        <mainClass>org.shenxiaoqu.clicker.point.App</mainClass>
                                     </classPath>
                                     <icon>src/main/resources/icons/favicon.ico</icon>
                                     <jre>
@@ -125,7 +125,7 @@
                         <artifactId>osxappbundle-maven-plugin</artifactId>
                         <version>1.0-alpha-1</version>
                         <configuration>
-                            <mainClass>org.shenxiaoqu.rpoint.App</mainClass>
+                            <mainClass>org.shenxiaoqu.clicker.point.App</mainClass>
                             <additionalClasspath>
                                 <path>/System/Library/Java/</path>
                             </additionalClasspath>
