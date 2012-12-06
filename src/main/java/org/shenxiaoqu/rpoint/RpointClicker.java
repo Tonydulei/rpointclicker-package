@@ -122,7 +122,7 @@ public class RpointClicker {
                         log("\n-------------------------------------------");
                         switchToEventFrame();
                         applyShopCampaign(i);
-                        
+                        driver.switchTo().window(mainWindow);
                     } catch (NoSuchElementException e) {
                         log("Timeout, wait " + timeoutSecond + " and didn't find the element.");
                         counterTimeout++;
@@ -179,9 +179,14 @@ public class RpointClicker {
     private void selectClickOrder() {
     	if (clickOrder != ClickOrder.NEW_ARRIVAL) {
 			switchToEventFrame();
-			driver.findElement(By.xpath("//*[@id=\"campaignCondition\"]/tbody/tr/td[2]/div/button[" + (clickOrder.ordinal() + 1) + "]")).click();
-			switchToEventMainWindow();
-			try {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            driver.findElement(By.xpath("/html/body/div[1]/div[2]/table/tbody/tr/td[2]/div/button[" + (clickOrder.ordinal() + 1) + "]")).click();
+            switchToEventMainWindow();
+            try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
