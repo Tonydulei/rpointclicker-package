@@ -12,34 +12,31 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RpointClicker {
-
-    protected WebDriver driver;
-    protected String baseUrl;
-    protected StringBuffer verificationErrors = new StringBuffer();
-
-    RpointClicker(String facebookUser, String facebookPass, String rakutenUser, String rakutenPass) throws Exception {
+	
+	RpointClicker(String facebookUser, String facebookPass, String rakutenUser, String rakutenPass) throws Exception {
         this.facebookUser = facebookUser;
         this.facebookPass = facebookPass;
         this.rakutenUser = rakutenUser;
         this.rakutenPass = rakutenPass;
     }
+	
+	public enum ClickOrder {NEW_ARRIVAL, DEADLINE, OLD_ARRIVAL, POINT_AMOUT, WINNER_NUMBER};
+	
+	private ClickOrder clickOrder = ClickOrder.NEW_ARRIVAL;
+	
+	public void setClickOrder(int i) throws NumberFormatException {
+		if (i < 0 || i >= ClickOrder.values().length) {
+			throw new NumberFormatException("click order out of range");
+		}
+		clickOrder = ClickOrder.values()[i];
+	}
+	
+	public void setClickOrder(ClickOrder order) {
+		clickOrder = order;
+	}
 
-    public WebDriver getDriver() {
-        return driver;
-    }
-
-    public void setDriver(WebDriver driver) {
-        this.driver = driver;
-    }
-
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public StringBuffer getVerificationErrors() {
-        return verificationErrors;
-    }
-
+    protected WebDriver driver;
+    
     String facebookUser;
     String facebookPass;
     String rakutenUser;
@@ -56,7 +53,12 @@ public class RpointClicker {
 
     int maxPageNum = 500;
 
+    // the Event main page handler.
     String mainWindow;
+
+    private void setDriver(WebDriver driver) {
+        this.driver = driver;
+    }
 
     public void setStartPage(int startPage) {
         this.startPage = startPage;
@@ -65,6 +67,8 @@ public class RpointClicker {
     public void setTimeoutSecond(int timeoutSecond) {
         this.timeoutSecond = timeoutSecond;
     }
+    
+    
 
     Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
 
@@ -85,15 +89,21 @@ public class RpointClicker {
         loginFacebook();
         loginRakuten();
         openRakutenEventPage();
+        
+        // record the main window
         mainWindow = driver.getWindowHandle();
+        
+        // select an order to click
+        selectClickOrder();
+        
         for (int page = 1; page < startPage + maxPageNum; page++) {
             if (page >= startPage) {
                 for (int i = 1; i <= 20; i++) {
                     try {
                         log("\n-------------------------------------------");
-                        driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+                        switchToEventFrame();
                         applyShopCampaign(i);
-                        driver.switchTo().window(mainWindow);
+                        
                     } catch (NoSuchElementException e) {
                         log("Timeout, wait " + timeoutSecond + " and didn't find the element.");
                         counterTimeout++;
@@ -123,7 +133,7 @@ public class RpointClicker {
                 Thread.sleep(2000);
                 int nextIndex = pageMap.containsKey(page) ? pageMap.get(page) : pageMap.get(0);
                 driver.findElement(By.xpath("/html/body/div/div[3]/div/div/div/a[" + nextIndex + "]")).click();
-                driver.switchTo().window(mainWindow);
+                switchToEventMainWindow();
             } catch (NoSuchElementException e) {
                 log("switch page Error.");
                 backToNormal();
@@ -133,8 +143,31 @@ public class RpointClicker {
             }
         }
     }
+    
+    private void switchToEventFrame() {
+    	driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+    }
+    
+    private void switchToEventMainWindow() {
+    	driver.switchTo().window(mainWindow);
+    }
 
-    private int nextPage(int page) {
+    private void selectClickOrder() {
+    	
+    	if (clickOrder != ClickOrder.NEW_ARRIVAL) {
+			switchToEventFrame();
+			driver.findElement(By.xpath("//*[@id=\"campaignCondition\"]/tbody/tr/td[2]/div/button[" + (clickOrder.ordinal() + 1) + "]")).click();
+			switchToEventMainWindow();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private int nextPage(int page) {
         return page + 1;
     }
 
@@ -249,7 +282,7 @@ public class RpointClicker {
                 driver.close();
             }
         }
-        driver.switchTo().window(mainWindow);
+        switchToEventMainWindow();
     }
 
     private void log(String s) {

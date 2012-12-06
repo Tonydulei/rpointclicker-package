@@ -29,6 +29,7 @@ public class App {
 
             RpointClicker r = new RpointClicker(facebookUser, facebookPass, rakutenUser, rakutenPass);
 
+            // set click condition.
             System.out.print("Set Timeout in second (default=5): ");
             try {
                 r.setTimeoutSecond(Integer.parseInt(in.nextLine()));
@@ -41,7 +42,23 @@ public class App {
             } catch (NumberFormatException e) {
                 System.out.println("page format wrong. use default ...");
             }
+            
+            // set click order
+            System.out.print("\n-------------------------");
+            System.out.print("\n--- 0. new arival");
+            System.out.print("\n--- 1. deadline");
+            System.out.print("\n--- 2. old arival");
+            System.out.print("\n--- 3. point");
+            System.out.print("\n--- 4. number of winers");
+            System.out.print("\n-------------------------");
+            System.out.print("\nPlease choose click order (default=0): ");
+            try {
+                r.setClickOrder(Integer.parseInt(in.nextLine()));
+            } catch (NumberFormatException e) {
+                System.out.println("click order wrong. use default ...");
+            }
 
+            System.out.print("\nStart ...");
             r.getPoint();
         } catch (Exception e) {
             e.printStackTrace();
