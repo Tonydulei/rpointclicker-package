@@ -24,6 +24,35 @@ public class RpointClicker {
 	
 	private ClickOrder clickOrder = ClickOrder.NEW_ARRIVAL;
 	
+	protected WebDriver driver;
+    
+    String facebookUser;
+    String facebookPass;
+    String rakutenUser;
+    String rakutenPass;
+
+    // counters for printing the status
+    int counterTimeout = 0;
+    int counterAlreadyApplied = 0;
+    int counterNewApplied = 0;
+    int counterServerError = 0;
+    int counterUnknownError = 0;
+
+    int startPage = 1;
+    
+    // wait timeout if the "Apply" button does not present
+    int timeoutSecond = 5;
+
+    int maxPageNum = 500;
+
+    // the Event main page handler.
+    String mainWindow;
+    
+    /**
+	 * set order to click
+	 * @param i
+	 * @throws NumberFormatException
+	 */
 	public void setClickOrder(int i) throws NumberFormatException {
 		if (i < 0 || i >= ClickOrder.values().length) {
 			throw new NumberFormatException("click order out of range");
@@ -35,26 +64,6 @@ public class RpointClicker {
 		clickOrder = order;
 	}
 
-    protected WebDriver driver;
-    
-    String facebookUser;
-    String facebookPass;
-    String rakutenUser;
-    String rakutenPass;
-
-    int counterTimeout = 0;
-    int counterAlreadyApplied = 0;
-    int counterNewApplied = 0;
-    int counterServerError = 0;
-    int counterUnknownError = 0;
-
-    int startPage = 1;
-    int timeoutSecond = 5;
-
-    int maxPageNum = 500;
-
-    // the Event main page handler.
-    String mainWindow;
 
     private void setDriver(WebDriver driver) {
         this.driver = driver;
@@ -68,21 +77,31 @@ public class RpointClicker {
         this.timeoutSecond = timeoutSecond;
     }
     
-    
-
+    /**
+     * This map is built to look for the "Next Page" button in the event iFrame
+     */
     Map<Integer, Integer> pageMap = new HashMap<Integer, Integer>();
-
-    public void setUp() throws Exception {
-        pageMap.put(1, 4);
+    
+    private void setForwardOrder() {
+    	pageMap.put(1, 4);
         pageMap.put(2, 7);
         pageMap.put(3, 8);
         pageMap.put(0, 9);
+    }
+
+    private void setUp() throws Exception {
+    	setForwardOrder();
         FirefoxProfile profile = new FirefoxProfile();
         setDriver(new FirefoxDriver(profile));
         driver.manage().timeouts().implicitlyWait(timeoutSecond, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
         driver.manage().timeouts().pageLoadTimeout(45, TimeUnit.SECONDS);
     }
+    
+    /**
+     * This is the main functional method of the Rpoint Clicker
+     * @throws Exception
+     */
 
     public void getPoint() throws Exception {
         setUp();
@@ -127,9 +146,10 @@ public class RpointClicker {
                 }
             }
 
+            // go to next page.
             try {
                 log("go to page " + nextPage(page));
-                driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
+                switchToEventFrame();
                 Thread.sleep(2000);
                 int nextIndex = pageMap.containsKey(page) ? pageMap.get(page) : pageMap.get(0);
                 driver.findElement(By.xpath("/html/body/div/div[3]/div/div/div/a[" + nextIndex + "]")).click();
@@ -152,8 +172,11 @@ public class RpointClicker {
     	driver.switchTo().window(mainWindow);
     }
 
+    /**
+     *  there are 5 types of order for listing the campaign
+     *  this method selects one specified by User. Default is 0.
+     */
     private void selectClickOrder() {
-    	
     	if (clickOrder != ClickOrder.NEW_ARRIVAL) {
 			switchToEventFrame();
 			driver.findElement(By.xpath("//*[@id=\"campaignCondition\"]/tbody/tr/td[2]/div/button[" + (clickOrder.ordinal() + 1) + "]")).click();
@@ -189,6 +212,10 @@ public class RpointClicker {
         driver.get("http://www.facebook.com/RakutenIchiba/app_260989120681773");
     }
 
+    /**
+     * Apply one campaign on a page.
+     * @param i : the i-th campaign on this page
+     */
     private void applyShopCampaign(int i) {
         String shopTitle = driver.findElement(By.xpath("/html/body/div/ul/div/div[3]/li[" + i + "]/dl/dd[3]/a")).getText();
         log("click " + shopTitle);
@@ -210,6 +237,11 @@ public class RpointClicker {
 
     }
 
+    /**
+     * click an element which opens a new window, and
+     * switch the driver to this new window.
+     * @param e
+     */
     private void clickAndSwitchToThatWindow(WebElement e) {
         final int windowsBefore = driver.getWindowHandles().size();
         e.click();
@@ -227,12 +259,19 @@ public class RpointClicker {
         switchToNewWindow();
     }
 
+    /**
+     * switch to the newest opened window
+     */
     private void switchToNewWindow() {
         for (String winHandle : driver.getWindowHandles()) {
             driver.switchTo().window(winHandle);
         }
     }
 
+    /**
+     * 
+     * @param shopTitle
+     */
     private void likeThisShop(String shopTitle) {
         WebElement likeButton = driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div/div[2]/div/div/div/div[3]/span/span/span/label"));
         if (likeButton.isDisplayed()) {
@@ -247,11 +286,10 @@ public class RpointClicker {
         }
     }
 
+    // apply the shop
     private void applyThisShop(String parent) {
-
         // switch to the campaign iframe
-        driver.switchTo().frame(driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div/div/iframe")));
-
+    	switchToEventFrame();
         // log the campaign name
         String campaignName = driver.findElement(By.xpath("/html/body/div[3]/div[2]/p")).getText();
         log("campaign Name: " + campaignName);
@@ -275,6 +313,10 @@ public class RpointClicker {
         driver.switchTo().window(parent);
     }
 
+    /**
+     * if some error happened, set the driver back to MainWindow
+     * before continue working.
+     */
     private void backToNormal() {
         for (String winHandle : driver.getWindowHandles()) {
             if (!winHandle.equals(mainWindow)) {
