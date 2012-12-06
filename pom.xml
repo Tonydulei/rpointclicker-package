@@ -13,25 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-	<repositories>
-		<!-- As of October 2009, a few of the weld dependencies were not yet on the main maven repo.  We can add JBoss repo as it is updated more frequently.  -->
-		<repository>
-			<id>repository.jboss.org</id>
-			<name>JBoss Repository</name>
-			<url>http://repository.jboss.org/maven2</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>thirdparty-releases</id>
-			<name>JBoss Thirdparty Releases</name>
-			<url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
-		</repository>
-	</repositories>
+
 	<dependencies>
 
         <dependency>
@@ -53,66 +35,115 @@
 				</descriptorRefs>
 			</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<encoding>UTF-8</encoding>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<shadedArtifactAttached>true</shadedArtifactAttached> <!-- Make the shaded artifact not the main one -->
-					<shadedClassifierName>shaded</shadedClassifierName> <!-- set the suffix to the shaded jar -->
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
-				<artifactId>launch4j-plugin</artifactId>
-				<version>1.5.0.0</version>
-				<executions>
-		
-					<!-- Command-line exe -->
-					<execution>
-						<id>l4j-cli</id>
-						<phase>package</phase>
-						<goals>
-							<goal>launch4j</goal>
-						</goals>
-						<configuration>
-							<headerType>console</headerType>
-							<outfile>target/rpoint-${version}.exe</outfile>
-							<jar>target/${artifactId}-${version}-shaded.jar</jar> <!-- 'shaded' is the value set on shadedClassifierName above -->
-							<errTitle>App Err</errTitle>
-							<classPath>
-								<mainClass>org.shenxiaoqu.rpoint.App</mainClass>
-							</classPath>
-							<icon>src/main/resources/icons/favicon.ico</icon>
-							<jre>
-								<minVersion>1.5.0</minVersion>
-								<maxVersion>1.6.0</maxVersion>
-								<initialHeapSize>128</initialHeapSize>
-								<maxHeapSize>1024</maxHeapSize>
-							</jre>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>	
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
 		</plugins>
-		
+
 	</build>
+
+    <profiles>
+        <profile>
+            <id>windows-build</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached> <!-- Make the shaded artifact not the main one -->
+                            <shadedClassifierName>shaded</shadedClassifierName> <!-- set the suffix to the shaded jar -->
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.bluestemsoftware.open.maven.plugin</groupId>
+                        <artifactId>launch4j-plugin</artifactId>
+                        <version>1.5.0.0</version>
+                        <executions>
+
+                            <!-- Command-line exe -->
+                            <execution>
+                                <id>l4j-cli</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>launch4j</goal>
+                                </goals>
+                                <configuration>
+                                    <headerType>console</headerType>
+                                    <outfile>target/rpoint-${version}.exe</outfile>
+                                    <jar>target/${artifactId}-${version}-shaded.jar</jar> <!-- 'shaded' is the value set on shadedClassifierName above -->
+                                    <errTitle>App Err</errTitle>
+                                    <classPath>
+                                        <mainClass>org.shenxiaoqu.rpoint.App</mainClass>
+                                    </classPath>
+                                    <icon>src/main/resources/icons/favicon.ico</icon>
+                                    <jre>
+                                        <minVersion>1.5.0</minVersion>
+                                        <maxVersion>1.6.0</maxVersion>
+                                        <initialHeapSize>128</initialHeapSize>
+                                        <maxHeapSize>1024</maxHeapSize>
+                                    </jre>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>mac-build</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>osxappbundle-maven-plugin</artifactId>
+                        <version>1.0-alpha-1</version>
+                        <configuration>
+                            <mainClass>org.shenxiaoqu.rpoint.App</mainClass>
+                            <additionalClasspath>
+                                <path>/System/Library/Java/</path>
+                            </additionalClasspath>
+                            <iconFile>${basedir}/src/main/resources/icons/favicon.ico</iconFile>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>bundle</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+
 </project>
