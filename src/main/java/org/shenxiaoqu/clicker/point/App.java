@@ -1,4 +1,5 @@
 package org.shenxiaoqu.clicker.point;
+import org.shenxiaoqu.clicker.driver.RpointCampaignDriver;
 import org.shenxiaoqu.clicker.site.simulator.RpointCampaignSimulator;
 
 import java.io.Console;
@@ -9,8 +10,10 @@ public class App {
 
     public static void main(String[] args) {
         String facebookUser, facebookPass, rakutenUser, rakutenPass;
+        PrintStream out = System.out;
+        Scanner in = new Scanner(System.in);
         try {
-            PrintStream out = System.out;
+
             Console console = System.console();
             if (console == null) {
                 System.out.println("Couldn't get Console instance");
@@ -19,7 +22,7 @@ public class App {
 
             console.printf("###### welcome to shenxiaoqu ###### \n\n");
 
-        	Scanner in = new Scanner(System.in);
+
             System.out.print("Facebook UserName (email): ");
             facebookUser = in.nextLine();
             char fPasswordArray[] = console.readPassword("Facebook password: ");
@@ -32,18 +35,25 @@ public class App {
             RpointCampaignSimulator simulator = new RpointCampaignSimulator(facebookUser, facebookPass, rakutenUser, rakutenPass);
 
             // set click condition.
-            System.out.print("Set Timeout in second (default=5): ");
+            out.print("Set Find Element Timeout in second (default=5): ");
             try {
                 simulator.setImplicitlyWaitSecond(Integer.parseInt(in.nextLine()));
             } catch (NumberFormatException e) {
-                System.out.println("timeout format wrong. use default ...");
+                out.println("timeout format wrong. use default ...");
             }
-            System.out.print("Start Page (default=1): ");
+            out.print("Set Page Load Timeout in second (default=45): ");
             try {
-                simulator.setStartPage(Integer.parseInt(in.nextLine()));
+                simulator.setPageLoadTimeoutSecond(Integer.parseInt(in.nextLine()));
             } catch (NumberFormatException e) {
-                System.out.println("page format wrong. use default ...");
+                out.println("timeout format wrong. use default ...");
             }
+            out.print("Set Javascript Timeout in second (default=10): ");
+            try {
+                simulator.setScriptTimeoutSecond(Integer.parseInt(in.nextLine()));
+            } catch (NumberFormatException e) {
+                out.println("timeout format wrong. use default ...");
+            }
+
             
             // set click order
             simulator.printSelectOrderDescription();
@@ -51,14 +61,21 @@ public class App {
             try {
                 simulator.setClickOrder(Integer.parseInt(in.nextLine()));
             } catch (NumberFormatException e) {
-                System.out.println("click order wrong. use default ...");
+                out.println("click order wrong. use default ...");
             }
 
-            System.out.print("\nStart ...");
+            out.print("Start Page (default=1): ");
+            try {
+                simulator.setStartPage(Integer.parseInt(in.nextLine()));
+            } catch (NumberFormatException e) {
+                out.println("page format wrong. use default ...");
+            }
+
+            out.print("\nStart ...");
             simulator.run();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Bye!");
+            out.println("Bye!");
         }
     }
 }

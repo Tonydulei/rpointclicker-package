@@ -111,6 +111,8 @@ public class RpointCampaignDriver extends RakutenDriver {
     }
 
     public void goToNextPage(int page) {
+        // wait the contents show, let's catch the first button of this page
+        findElementByXPathUntilClickable("/html/body/div/ul/div/div[3]/li[1]/dl/dd[3]/a");
         int nextIndex = pageMap.containsKey(page) ? pageMap.get(page) : pageMap.get(0);
         clickElementByXPath("/html/body/div/div[3]/div/div/div/a[" + nextIndex + "]");
     }
