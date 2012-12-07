@@ -9,12 +9,14 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.shenxiaoqu.clicker.util.PropertyUtil;
+
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractDriver {
 
     protected WebDriver driver;
-    int implicitlyWaitSecond = 5;
+    int implicitlyWaitSecond = PropertyUtil.getPropertyInt("driver.default.timeout.implicitly");
     int scriptTimeoutSecond = 10;
     int pageLoadTimoutSecond = 30;
 

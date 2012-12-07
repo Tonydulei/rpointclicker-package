@@ -7,26 +7,21 @@ import java.util.Scanner;
 public class App {
 
     public static void main(String[] args) {
-        String facebookUser, facebookPass, rakutenUser, rakutenPass;
+        String facebookUser="2", facebookPass="2", rakutenUser="2", rakutenPass="2";
         try {
         	
-        	Console console = System.console();
-        	if (console == null) {
-                System.out.println("Couldn't get Console instance");
-                System.exit(0);
-            }
         	
-        	console.printf("###### welcome to shenxiaoqu ###### \n\n");
-
+        	
+        	
             Scanner in = new Scanner(System.in);
-            System.out.print("Facebook UserName (email): ");
+            /*System.out.print("Facebook UserName (email): ");
             facebookUser = in.nextLine();
             char fPasswordArray[] = console.readPassword("Facebook password: ");
             facebookPass = new String(fPasswordArray);
             System.out.print("R UserName (email): ");
             rakutenUser = in.nextLine();
             char rPasswordArray[] = console.readPassword("R password: ");
-            rakutenPass = new String(rPasswordArray);
+            rakutenPass = new String(rPasswordArray);*/
 
             RpointCampainDriver r = new RpointCampainDriver(facebookUser, facebookPass, rakutenUser, rakutenPass);
 
