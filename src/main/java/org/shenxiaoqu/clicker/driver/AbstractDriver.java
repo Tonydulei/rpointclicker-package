@@ -4,52 +4,31 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.shenxiaoqu.clicker.util.PropertyUtil;
 
-import java.util.concurrent.TimeUnit;
+import java.io.PrintStream;
 
 public abstract class AbstractDriver {
 
-    protected WebDriver driver;
-    int implicitlyWaitSecond = PropertyUtil.getPropertyInt("driver.default.timeout.implicitly");
-    int scriptTimeoutSecond = 10;
-    int pageLoadTimoutSecond = 30;
+    private int waitConditionSecond = PropertyUtil.getPropertyInt("driver.wait.condition.second");
 
-    protected void setDriver(WebDriver driver) {
+    protected PrintStream log = System.out;
+    protected WebDriver driver;
+
+    public void setLog(PrintStream log) {
+        this.log = log;
+    }
+
+    public void setDriver(WebDriver driver) {
         this.driver = driver;
     }
 
-    public void setImplicitlyWaitSecond(int implicitlyWaitSecond) {
-        this.implicitlyWaitSecond = implicitlyWaitSecond;
+    protected void openUrl(String url) {
+        driver.get(url);
     }
-
-    public void setScriptTimeoutSecond(int scriptTimeoutSecond) {
-        this.scriptTimeoutSecond = scriptTimeoutSecond;
-    }
-
-    public void setPageLoadTimoutSecond(int pageLoadTimoutSecond) {
-        this.pageLoadTimoutSecond = pageLoadTimoutSecond;
-    }
-
-    protected void setUp() throws Exception {
-        FirefoxProfile profile = new FirefoxProfile();
-        setDriver(new FirefoxDriver(profile));
-        driver.manage().timeouts().implicitlyWait(implicitlyWaitSecond, TimeUnit.SECONDS);
-        driver.manage().timeouts().setScriptTimeout(scriptTimeoutSecond, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(pageLoadTimoutSecond, TimeUnit.SECONDS);
-    }
-
-    /**
-     * This is the main functional method of the driver
-     * @throws Exception
-     */
-
-    public abstract void run() throws Exception;
 
     protected void refreshWindow() {
         driver.navigate().refresh();
@@ -80,7 +59,7 @@ public abstract class AbstractDriver {
     }
 
     protected WebElement findElementByXPathUntilClickable(String xPath) {
-        WebDriverWait wait = new WebDriverWait(driver, implicitlyWaitSecond);
+        WebDriverWait wait = new WebDriverWait(driver, waitConditionSecond);
         return wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xPath)));
     }
 
@@ -90,7 +69,7 @@ public abstract class AbstractDriver {
      * @param e
      */
     protected void clickAndSwitchToThatWindow(WebElement e) {
-        clickAndSwitchToThatWindow(e, pageLoadTimoutSecond);
+        clickAndSwitchToThatWindow(e, waitConditionSecond);
     }
 
     protected void clickAndSwitchToThatWindow(WebElement e, int waitSecond) {
